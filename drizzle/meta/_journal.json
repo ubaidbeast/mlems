@@ -15,6 +15,13 @@
       "when": 1771660693595,
       "tag": "0001_steady_luke_cage",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1771671938798,
+      "tag": "0002_bent_crystal",
+      "breakpoints": true
     }
   ]
 }
