@@ -36,7 +36,7 @@ export const AccountForm = ({ id, defaultValues, onSubmit, onDelete, disabled }:
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 pt-4">
+            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 p-4">
                 <FormField
                     control={form.control}
                     name="name"
@@ -50,11 +50,11 @@ export const AccountForm = ({ id, defaultValues, onSubmit, onDelete, disabled }:
                     )}
                 />
                 <Button className="w-full" disabled={disabled}>
-                    {id ? "save changes" : "create account"}
+                    {id ? "save changes" : "create department"}
                 </Button>
                 {!!id && <Button type="button" variant="outline" onClick={handleDelete} disabled={disabled} className="w-full">
                     <Trash className="size-4 mr-2"/>
-                    Delete Account
+                    Delete Department
                 </Button>}
             </form>
         </Form>

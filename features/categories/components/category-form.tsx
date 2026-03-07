@@ -36,7 +36,7 @@ export const CategoryForm = ({ id, defaultValues, onSubmit, onDelete, disabled }
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 pt-4">
+            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 p-4">
                 <FormField
                     control={form.control}
                     name="name"
