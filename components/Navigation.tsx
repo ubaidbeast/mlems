@@ -11,7 +11,8 @@ import {
     SheetTrigger
   } from "@/components/ui/sheet"
 import { Button } from "./ui/button";
-import { Key, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
+import { AppRole } from "@/lib/roles";
 
 const routes = [
     {
@@ -36,7 +37,11 @@ const routes = [
     },
 ]
 
-export function Navigation() {
+type Props = {
+    role: AppRole;
+}
+
+export function Navigation({ role }: Props) {
     const [isOpen, setIsOpen] = useState(false);
 
     const router = useRouter();
@@ -47,6 +52,10 @@ export function Navigation() {
         router.push(href)
         setIsOpen(false)
     }
+
+    const visibleRoutes = role === "admin"
+        ? routes
+        : routes.filter((route) => route.href !== "/departments" && route.href !== "/categories");
 
     if (isMobile)  {
         return (
@@ -63,7 +72,7 @@ export function Navigation() {
                 <SheetContent side="left" className="px-2 ">
                     <SheetTitle className="sr-only">Navigation</SheetTitle>
                     <nav className="flex flex-col gap-y-2 pt-6">
-                        {routes.map((route) => (
+                        {visibleRoutes.map((route) => (
                             <Button
                                 key={route.href}
                                 variant={route.href === pathName ? "secondary" : "ghost"}
@@ -81,7 +90,7 @@ export function Navigation() {
 
   return (
     <nav className="hidden lg:flex items-center gap-x-2 overflow-x-auto"> 
-        {routes.map((route) => (
+        {visibleRoutes.map((route) => (
             <NavButton 
                 key={route.href}
                 href={route.href}

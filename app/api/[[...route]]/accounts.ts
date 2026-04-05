@@ -8,6 +8,7 @@ import { zValidator } from "@hono/zod-validator";
 import { createId } from "@paralleldrive/cuid2";
 import z from "zod";
 import { id } from "zod/v4/locales";
+import { isAdmin } from "@/lib/roles";
 
 const app = new Hono()
     .get("/",
@@ -24,8 +25,7 @@ const app = new Hono()
             const data = await db.select({
                 id: accounts.id,
                 name: accounts.name,
-            }). from(accounts)
-              .where(eq(accounts.userId, auth.userId));
+                        }). from(accounts);
             return c.json({data})
     })
     .get(
@@ -50,12 +50,7 @@ const app = new Hono()
                 name: accounts.name,
             })
             .from(accounts)
-            .where(
-                and(
-                    eq(accounts.userId, auth.userId),
-                    eq(accounts.id, id)
-                )
-            );
+            .where(eq(accounts.id, id));
 
             if(!data) {
                 return c.json({error: "account not found"}, 404);
@@ -73,6 +68,10 @@ const app = new Hono()
 
             if(!auth?.userId){
                 return c.json({error: "unauthorized"}, 401);
+            }
+
+            if (!isAdmin(auth.sessionClaims)) {
+                return c.json({ error: "forbidden" }, 403);
             }
 
             const [data] = await db.insert(accounts).values({
@@ -100,14 +99,13 @@ const app = new Hono()
                 return c.json({error: "unauthorized"}, 401);
             }
 
+            if (!isAdmin(auth.sessionClaims)) {
+                return c.json({ error: "forbidden" }, 403);
+            }
+
             const data = await db
                 .delete(accounts)
-                .where(
-                    and(
-                        eq(accounts.userId, auth.userId),
-                        inArray(accounts.id, values.ids)
-                    ),
-                )
+                .where(inArray(accounts.id, values.ids))
                 .returning(
                     {id: accounts.id}
                 );
@@ -133,15 +131,14 @@ const app = new Hono()
                 return c.json({error: "unauthorized"}, 401);
             }
 
+            if (!isAdmin(auth.sessionClaims)) {
+                return c.json({ error: "forbidden" }, 403);
+            }
+
             const [data] = await db
                 .update(accounts)
                 .set(values)
-                .where(
-                    and(
-                        eq(accounts.userId, auth.userId),
-                        eq(accounts.id, id)
-                    )
-                )
+                .where(eq(accounts.id, id))
                 .returning();
 
             if(!data) {
@@ -166,14 +163,13 @@ const app = new Hono()
                 return c.json({error: "unauthorized"}, 401);
             }
 
+            if (!isAdmin(auth.sessionClaims)) {
+                return c.json({ error: "forbidden" }, 403);
+            }
+
             const [data] = await db
                 .delete(accounts)
-                .where(
-                    and(
-                        eq(accounts.userId, auth.userId),
-                        eq(accounts.id, id)
-                    )
-                )
+                .where(eq(accounts.id, id))
                 .returning({
                     id: accounts.id,
                 });

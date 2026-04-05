@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { SingleValue } from "react-select";
+import ReactSelect from "react-select";
 import CreateableSelect from "react-select/creatable";
 
 type Props = {
@@ -31,24 +32,36 @@ export const Select = ({
         return options.find(option => option.value === value);
     }, [options, value])
 
+    const sharedProps = {
+        placeholder,
+        className: "text-sm h-10",
+        styles: {
+            control: (base: Record<string, unknown>) => ({
+                ...base,
+                borderColor: "#e2e8f0",
+                ":hover": {
+                    borderColor: "#e2e8f0",
+                }
+            })
+        },
+        value: formattedValue,
+        onChange: onSelect,
+        options,
+        isDisabled: disabled,
+    };
+
+    if (!onCreate) {
+        return (
+            <ReactSelect
+                {...sharedProps}
+            />
+        );
+    }
+
     return (
         <CreateableSelect 
-            placeholder={placeholder}
-            className="text-sm h-10"
-            styles={{
-                control: (base) => ({
-                    ...base,
-                    borderColor: "#e2e8f0",
-                    ":hover": {
-                        borderColor: "#e2e8f0",
-                    }
-                })
-            }}
-            value={formattedValue}
-            onChange={onSelect}
-            options={options}
+            {...sharedProps}
             onCreateOption={onCreate}
-            isDisabled={disabled}
         />
     )
 };

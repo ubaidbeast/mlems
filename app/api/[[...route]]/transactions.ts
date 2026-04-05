@@ -49,7 +49,6 @@ const app = new Hono()
             .where(
                 and(
                     accountId ? eq(transactions.accountId, accountId) : undefined,
-                    eq(accounts.userId, auth.userId),
                     gte(transactions.date, startDate),
                     lte(transactions.date, endDate),
                 )
@@ -87,10 +86,7 @@ const app = new Hono()
             .from(transactions)
             .innerJoin(accounts, eq(transactions.accountId, accounts.id))
             .where(
-                and(
-                    eq(transactions.id, id),
-                    eq(accounts.userId, auth.userId)
-                )
+                eq(transactions.id, id)
             );
 
             if(!data) {
@@ -163,13 +159,7 @@ const app = new Hono()
             const transactionsToDelete = db.$with("transactions-to-delete").as(
                 db.select({id: transactions.id})
                 .from(transactions)
-                .innerJoin(accounts, eq(transactions.accountId, accounts.id))
-                .where(
-                    and(
-                        inArray(transactions.id, values.ids),
-                        eq(accounts.userId, auth.userId)
-                    )
-                )
+                .where(inArray(transactions.id, values.ids))
             );
 
             const data = await db
@@ -204,13 +194,7 @@ const app = new Hono()
              const transactionsToUpdate = db.$with("transactions-to-update").as(
                 db.select({id: transactions.id})
                 .from(transactions)
-                .innerJoin(accounts, eq(transactions.accountId, accounts.id))
-                .where(
-                    and(
-                        eq(transactions.id, id),
-                        eq(accounts.userId, auth.userId)
-                    )
-                )
+                .where(eq(transactions.id, id))
             );
 
             const [data] = await db
@@ -247,13 +231,7 @@ const app = new Hono()
             const transactionsToDelete = db.$with("transactions-to-delete").as(
                 db.select({id: transactions.id})
                 .from(transactions)
-                .innerJoin(accounts, eq(transactions.accountId, accounts.id))
-                .where(
-                    and(
-                        eq(transactions.id, id),
-                        eq(accounts.userId, auth.userId)
-                    )
-                )
+                .where(eq(transactions.id, id))
             );
 
             const [data] = await db

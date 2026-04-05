@@ -9,6 +9,8 @@ import { useGetAccounts } from "@/features/accounts/api/use-get-accounts";
 import { useCreateAccount } from "@/features/accounts/api/use-create-accounts";
 import { TransactionForm } from "./transaction-form";
 import { Loader2 } from "lucide-react";
+import { useAuth } from "@clerk/nextjs";
+import { getRoleFromSessionClaims } from "@/lib/roles";
 
 const formSchema = insertTransactionSchema.omit({id: true});
 
@@ -16,6 +18,9 @@ type FormValues = z.infer<typeof formSchema>;
 
 export const NewTransactionSheet = () => {
     const { isOpen, onClose } = useNewTransaction();
+    const { sessionClaims } = useAuth();
+    const role = getRoleFromSessionClaims(sessionClaims);
+    const canCreateInline = role === "admin";
 
     const createMutation = useCreateTransaction();
 
@@ -35,7 +40,9 @@ export const NewTransactionSheet = () => {
         value: account.id
     }));
 
-    const isPending = createMutation.isPending || categoryMutation.isPending || accountMutation.isPending; 
+    const isPending =
+        createMutation.isPending ||
+        (canCreateInline && (categoryMutation.isPending || accountMutation.isPending));
 
     const isLoading = categoryQuery.isLoading || accountQuery.isLoading;
 
@@ -66,12 +73,13 @@ export const NewTransactionSheet = () => {
                 :
                 (
                     <TransactionForm 
+                        role={role}
                         onSubmit={onSubmit}
                         disabled={isPending}
                         categoryOptions={categoryOptions}
-                        onCreateCategory={onCreateCategory}
+                        onCreateCategory={canCreateInline ? onCreateCategory : undefined}
                         accountOptions={accountOptions}
-                        onCreateAccount={onCreateAccount}
+                        onCreateAccount={canCreateInline ? onCreateAccount : undefined}
                     />
                 )}
             </SheetContent>

@@ -12,9 +12,10 @@ import { Select } from "@/components/select"
 import { Textarea } from "@/components/ui/textarea"
 import { AmountInput } from "@/components/amount-input"
 import { convertAmountToMiliunits } from "@/lib/utils"
+import { AppRole } from "@/lib/roles"
 
 const formSchema =z.object({
-    date: z.coerce.date(),
+    date: z.date(),
     accountId: z.string(),
     categoryId: z.string().nullable().optional(),
     payee: z.string(),
@@ -25,22 +26,24 @@ const formSchema =z.object({
 const apiSchema = insertTransactionSchema.omit({id: true});
 
 type FormValues = z.infer<typeof formSchema>;
-type ApiFormValues = z.input<typeof apiSchema>
+type ApiFormValues = z.infer<typeof apiSchema>
 
 type props = {
     id?: string;
+    role: AppRole;
     defaultValues?: FormValues;
     onSubmit: (values: ApiFormValues) => void;
     onDelete?: () => void;
     disabled?: boolean;
     accountOptions: { label: string; value: string }[];
     categoryOptions: { label: string; value: string }[];
-    onCreateAccount: (name: string) => void;
-    onCreateCategory: (name: string) => void;
+    onCreateAccount?: (name: string) => void;
+    onCreateCategory?: (name: string) => void;
 };
 
 export const TransactionForm = ({ 
     id, 
+    role,
     defaultValues, 
     onSubmit, 
     onDelete, 
@@ -98,7 +101,7 @@ export const TransactionForm = ({
                                 <Select 
                                     placeholder="Select a department"
                                     options={accountOptions}
-                                    onCreate={onCreateAccount}
+                                    onCreate={role === "admin" ? onCreateAccount : undefined}
                                     value={field.value}
                                     onChange={field.onChange}
                                     disabled={disabled}
@@ -117,7 +120,7 @@ export const TransactionForm = ({
                                 <Select 
                                     placeholder="Select a category"
                                     options={categoryOptions}
-                                    onCreate={onCreateCategory}
+                                    onCreate={role === "admin" ? onCreateCategory : undefined}
                                     value={field.value}
                                     onChange={field.onChange}
                                     disabled={disabled}

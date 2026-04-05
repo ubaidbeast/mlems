@@ -16,7 +16,7 @@ export const useSelectAccount = (): [() => JSX.Element, () => Promise<unknown>] 
     }))
 
     const [promise, setPromise] = useState<{ resolve: (value: string | undefined) =>  void } | null>(null);
-    const selectValue = useRef<string>();
+    const selectValue = useRef<string | undefined>(undefined);
 
     const confirm = () => new Promise((resolve, reject) => {
         setPromise({ resolve });
@@ -47,7 +47,9 @@ export const useSelectAccount = (): [() => JSX.Element, () => Promise<unknown>] 
                     placeholder="Select a department"
                     options={accountOptions}
                     onCreate={onCreateAccount}
-                    onChange={(value) => selectValue.current = value}
+                    onChange={(value) => {
+                        selectValue.current = value;
+                    }}
                     disabled={accountQuery.isLoading || accountMutation.isPending}
                 />
                 <DialogFooter className="pt-2">

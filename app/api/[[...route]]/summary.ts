@@ -39,7 +39,6 @@ const app = new Hono()
             const lastPeriodEnd = subDays(endDate, periodLength);
 
             async function fetchFinancialData(
-                userId: string,
                 start: Date,
                 end: Date,
             ) {
@@ -57,15 +56,14 @@ const app = new Hono()
                     .where(
                         and(
                             accountId ? eq(transactions.accountId, accountId) : undefined,
-                            eq(accounts.userId, userId),
                             gte(transactions.date, startDate),
                             lte(transactions.date, endDate)
                         )
                     )
             }
 
-            const [currentPeriod] = await fetchFinancialData(auth.userId, startDate, endDate);
-            const [lastPeriod] = await fetchFinancialData(auth.userId, lastPeriodStart, lastPeriodEnd);
+            const [currentPeriod] = await fetchFinancialData(startDate, endDate);
+            const [lastPeriod] = await fetchFinancialData(lastPeriodStart, lastPeriodEnd);
 
             const incomeChange = claculatePercentageChange(currentPeriod.income, lastPeriod.income);
             const expenseChange = claculatePercentageChange(currentPeriod.expense, lastPeriod.expense);
@@ -88,7 +86,6 @@ const app = new Hono()
                 .where(
                         and(
                             accountId ? eq(transactions.accountId, accountId) : undefined,
-                            eq(accounts.userId, auth.userId),
                             lt(transactions.amount, 0),
                             gte(transactions.date, startDate),
                             lte(transactions.date, endDate)
@@ -123,7 +120,6 @@ const app = new Hono()
                 .where(
                         and(
                             accountId ? eq(transactions.accountId, accountId) : undefined,
-                            eq(accounts.userId, auth.userId),
                             gte(transactions.date, startDate),
                             lte(transactions.date, endDate)
                         )

@@ -1,10 +1,13 @@
 import { Header } from "@/components/Header";
+import { auth } from "@clerk/nextjs/server";
 
 type Props= {
     children: React.ReactNode;
 }
 
-function DashboardLayout({ children }: Props) {
+async function DashboardLayout({ children }: Props) {
+  await auth.protect();
+
   return (
     <>        
           <Header />
