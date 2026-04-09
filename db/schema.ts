@@ -3,6 +3,18 @@ import { relations } from "drizzle-orm"
 import { createInsertSchema } from "drizzle-zod";
 import z from "zod";
 
+export const users = pgTable("users", {
+    id: text("id").primaryKey(),
+    clerkId: text("clerkId").notNull().unique(),
+    firstName: text("firstName"),
+    lastName: text("lastName"),
+    email: text("email"),
+    createdAt: timestamp("createdAt", { mode: "date" }).notNull(),
+    updatedAt: timestamp("updatedAt", { mode: "date" }).notNull(),
+});
+
+export const insertUserSchema = createInsertSchema(users);
+
 export const accounts = pgTable("accounts", {
     id: text("id").primaryKey(),
     name: text("name").notNull(),
