@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Mail, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import { assignDepartmentToUser } from "./actions";
@@ -23,6 +23,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { SendInvitationDialog } from "@/features/invitations/components/send-invitation-dialog";
 
 const NO_DEPARTMENT_VALUE = "__none__";
 
@@ -75,6 +76,7 @@ export const UsersDepartmentsManager = ({ users, departments }: Props) => {
         return initialState;
     });
     const [pendingAssignment, setPendingAssignment] = useState<PendingAssignment | null>(null);
+    const [invitationDialogOpen, setInvitationDialogOpen] = useState(false);
     const [isPending, startTransition] = useTransition();
 
     const departmentsById = useMemo(() => {
@@ -148,11 +150,20 @@ export const UsersDepartmentsManager = ({ users, departments }: Props) => {
     return (
         <div className="max-w-screen-2xl mx-auto w-full pb-10 -mt-24">
             <Card className="border-none drop-shadow-sm">
-                <CardHeader>
-                    <CardTitle className="text-xl line-clamp-1 font-bold">Assign Departments</CardTitle>
-                    <CardDescription>
-                        AAssign a department to an employee.
-                    </CardDescription>
+                <CardHeader className="gap-y-2 lg:flex lg:flex-row lg:items-center lg:justify-between">
+                    <div>
+                        <CardTitle className="text-xl line-clamp-1 font-bold">Assign Departments</CardTitle>
+                        <CardDescription>
+                            AAssign a department to an employee.
+                        </CardDescription>
+                    </div>
+                    <Button 
+                        className="w-full lg:w-auto" 
+                        onClick={() => setInvitationDialogOpen(true)}
+                    >
+                        <Mail size={16}/>
+                        Send Invitation
+                    </Button>
                 </CardHeader>
                 <CardContent>
                     <Table>
@@ -240,6 +251,11 @@ export const UsersDepartmentsManager = ({ users, departments }: Props) => {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            <SendInvitationDialog 
+                open={invitationDialogOpen} 
+                onOpenChange={setInvitationDialogOpen} 
+            />
         </div>
     );
 };
