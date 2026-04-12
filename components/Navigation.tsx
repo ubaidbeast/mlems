@@ -32,8 +32,8 @@ const routes = [
         label: 'Categories'
     },
     {
-        href: '/settings',
-        label: 'Settings'
+        href: '/users',
+        label: 'Employee Departments'
     },
 ]
 
@@ -55,7 +55,7 @@ export function Navigation({ role }: Props) {
 
     const visibleRoutes = role === "admin"
         ? routes
-        : routes.filter((route) => route.href !== "/departments" && route.href !== "/categories");
+        : routes.filter((route) => route.href !== "/departments" && route.href !== "/categories" && route.href !== "/users");
 
     if (isMobile)  {
         return (

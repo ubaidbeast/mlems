@@ -9,6 +9,9 @@ export const users = pgTable("users", {
     firstName: text("firstName"),
     lastName: text("lastName"),
     email: text("email"),
+    department: text("department").references(() => accounts.id, {
+        onDelete: "set null",
+    }),
     createdAt: timestamp("createdAt", { mode: "date" }).notNull(),
     updatedAt: timestamp("updatedAt", { mode: "date" }).notNull(),
 });

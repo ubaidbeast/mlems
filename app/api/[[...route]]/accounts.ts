@@ -8,7 +8,8 @@ import { zValidator } from "@hono/zod-validator";
 import { createId } from "@paralleldrive/cuid2";
 import z from "zod";
 import { id } from "zod/v4/locales";
-import { isAdmin } from "@/lib/roles";
+import { getRoleFromSessionClaims, isAdmin } from "@/lib/roles";
+import { getUserDepartmentByClerkId } from "@/lib/get-user-department";
 
 const app = new Hono()
     .get("/",
@@ -20,6 +21,26 @@ const app = new Hono()
                 throw new HTTPException(401, {
                     res: c.json({error: "unauthorized"}, 401)
                 });
+            }
+
+            const role = getRoleFromSessionClaims(auth.sessionClaims);
+
+            if (role !== "admin") {
+                const departmentId = await getUserDepartmentByClerkId(auth.userId);
+
+                if (!departmentId) {
+                    return c.json({ data: [] });
+                }
+
+                const data = await db
+                    .select({
+                        id: accounts.id,
+                        name: accounts.name,
+                    })
+                    .from(accounts)
+                    .where(eq(accounts.id, departmentId));
+
+                return c.json({ data });
             }
             
             const data = await db.select({
@@ -42,6 +63,20 @@ const app = new Hono()
 
             if(!auth?.userId) {
                 return c.json({error: "unauthorized"}, 401);
+            }
+
+            const role = getRoleFromSessionClaims(auth.sessionClaims);
+
+            if (role !== "admin") {
+                const departmentId = await getUserDepartmentByClerkId(auth.userId);
+
+                if (!departmentId) {
+                    return c.json({ error: "forbidden" }, 403);
+                }
+
+                if (departmentId !== id) {
+                    return c.json({ error: "forbidden" }, 403);
+                }
             }
 
             const [data] = await db

@@ -29,6 +29,13 @@
       "when": 1775700000000,
       "tag": "0003_clerk_users",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1775814038935,
+      "tag": "0004_clear_stature",
+      "breakpoints": true
     }
   ]
 }

@@ -7,6 +7,8 @@ import { db } from "@/db/drizzle";
 import { and, desc, eq, gte, lt, lte, sql, sum } from "drizzle-orm";
 import { accounts, categories, transactions } from "@/db/schema";
 import { claculatePercentageChange, fillMissingDays } from "@/lib/utils";
+import { getRoleFromSessionClaims } from "@/lib/roles";
+import { getUserDepartmentByClerkId } from "@/lib/get-user-department";
 
 const app = new Hono()
     .get(
@@ -27,6 +29,16 @@ const app = new Hono()
             if (!auth?.userId) {
                 return c.json({error: "Unauthorized"}, 401);
             }
+
+            const role = getRoleFromSessionClaims(auth.sessionClaims);
+            const userDepartment =
+                role !== "admin" ? await getUserDepartmentByClerkId(auth.userId) : null;
+
+            if (role !== "admin" && !userDepartment) {
+                return c.json({ error: "forbidden" }, 403);
+            }
+
+            const scopedAccountId = role === "admin" ? accountId : userDepartment;
 
             const defaultTo = new Date();
             const defaultFrom = subDays(defaultTo, 30);
@@ -55,9 +67,9 @@ const app = new Hono()
                     )
                     .where(
                         and(
-                            accountId ? eq(transactions.accountId, accountId) : undefined,
-                            gte(transactions.date, startDate),
-                            lte(transactions.date, endDate)
+                            scopedAccountId ? eq(transactions.accountId, scopedAccountId) : undefined,
+                            gte(transactions.date, start),
+                            lte(transactions.date, end)
                         )
                     )
             }
@@ -85,7 +97,7 @@ const app = new Hono()
                 )
                 .where(
                         and(
-                            accountId ? eq(transactions.accountId, accountId) : undefined,
+                            scopedAccountId ? eq(transactions.accountId, scopedAccountId) : undefined,
                             lt(transactions.amount, 0),
                             gte(transactions.date, startDate),
                             lte(transactions.date, endDate)
@@ -119,7 +131,7 @@ const app = new Hono()
                 )
                 .where(
                         and(
-                            accountId ? eq(transactions.accountId, accountId) : undefined,
+                            scopedAccountId ? eq(transactions.accountId, scopedAccountId) : undefined,
                             gte(transactions.date, startDate),
                             lte(transactions.date, endDate)
                         )

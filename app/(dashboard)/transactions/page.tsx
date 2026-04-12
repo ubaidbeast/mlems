@@ -11,12 +11,13 @@ import { useGetTransactions } from "@/features/transactions/api/use-get-transact
 import { useBulkDeleteTransactions } from "@/features/transactions/api/use-bulk-delete-transactions";
 import { useState } from "react";
 import { UploadButton } from "./upload-button";
-import { set } from "zod";
 import { ImportCard } from "./import-card";
 import { transactions as transactionsSchema } from "@/db/schema";
 import { useSelectAccount } from "@/features/accounts/hooks/use-select-account";
 import { toast } from "sonner";
 import { useBulkCreateTransactions } from "@/features/transactions/api/use-bulk-create-transactions";
+import { useAuth } from "@clerk/nextjs";
+import { getRoleFromSessionClaims } from "@/lib/roles";
 
 enum VARIANTS {
     LIST = "lists",
@@ -30,6 +31,10 @@ const INTITIAL_IMPORT_RESULTS = {
 }
 
 const TransactionsPage = () => {
+    const { sessionClaims } = useAuth();
+    const role = getRoleFromSessionClaims(sessionClaims);
+    const canImportTransactions = role === "admin";
+
     const [AccountDialog, confirm] = useSelectAccount();
     const [variant, setVariant] = useState<VARIANTS>(VARIANTS.LIST);
     const [importResults, setImportResults] = useState(INTITIAL_IMPORT_RESULTS);
@@ -83,7 +88,7 @@ const TransactionsPage = () => {
                         <Skeleton className="h-8 w-48"/>
                     </CardHeader>
                     <CardContent>
-                        <div className="h-[500px] w-full flex items-center justify-center">
+                        <div className="h-125 w-full flex items-center justify-center">
                             <Loader2 className="size-6 text-slate-300 animate-spin"/>
                         </div>
                     </CardContent>
@@ -92,7 +97,7 @@ const TransactionsPage = () => {
         )
     }
 
-    if (variant === VARIANTS.IMPORT) {
+    if (variant === VARIANTS.IMPORT && canImportTransactions) {
         return (
             <>
                 <AccountDialog />
@@ -115,7 +120,7 @@ const TransactionsPage = () => {
                             <Plus size="sm"/>
                             Add new
                         </Button>
-                        <UploadButton onUpload={onUpload} />
+                        {canImportTransactions && <UploadButton onUpload={onUpload} />}
                     </div>
                 </CardHeader>
                 <CardContent>

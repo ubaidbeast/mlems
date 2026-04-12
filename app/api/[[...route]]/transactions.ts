@@ -9,6 +9,23 @@ import { zValidator } from "@hono/zod-validator";
 import { createId } from "@paralleldrive/cuid2";
 import z from "zod";
 import { ca, id } from "zod/v4/locales";
+import { getRoleFromSessionClaims } from "@/lib/roles";
+import { getUserDepartmentByClerkId } from "@/lib/get-user-department";
+
+const getScopedDepartmentForUser = async (auth: ReturnType<typeof getAuth>) => {
+    if (!auth?.userId) {
+        return { role: null, departmentId: null };
+    }
+
+    const role = getRoleFromSessionClaims(auth.sessionClaims);
+
+    if (role === "admin") {
+        return { role, departmentId: null };
+    }
+
+    const departmentId = await getUserDepartmentByClerkId(auth.userId);
+    return { role, departmentId };
+};
 
 const app = new Hono()
     .get("/",
@@ -25,6 +42,14 @@ const app = new Hono()
             if(!auth?.userId) {
                 return c.json({error: "unauthorized"}, 401);
             }
+
+            const { role, departmentId } = await getScopedDepartmentForUser(auth);
+
+            if (role !== "admin" && !departmentId) {
+                return c.json({ error: "forbidden" }, 403);
+            }
+
+            const scopedAccountId = role === "admin" ? accountId : departmentId;
 
             const defaultTo = new Date();
             const defaultFrom = subDays(defaultTo, 30);
@@ -48,7 +73,7 @@ const app = new Hono()
             .leftJoin(categories, eq(transactions.categoryId, categories.id))
             .where(
                 and(
-                    accountId ? eq(transactions.accountId, accountId) : undefined,
+                    scopedAccountId ? eq(transactions.accountId, scopedAccountId) : undefined,
                     gte(transactions.date, startDate),
                     lte(transactions.date, endDate),
                 )
@@ -73,6 +98,12 @@ const app = new Hono()
                 return c.json({error: "unauthorized"}, 401);
             }
 
+            const { role, departmentId } = await getScopedDepartmentForUser(auth);
+
+            if (role !== "admin" && !departmentId) {
+                return c.json({ error: "forbidden" }, 403);
+            }
+
             const [data] = await db
             .select({
                 id: transactions.id,
@@ -86,7 +117,10 @@ const app = new Hono()
             .from(transactions)
             .innerJoin(accounts, eq(transactions.accountId, accounts.id))
             .where(
-                eq(transactions.id, id)
+                and(
+                    eq(transactions.id, id),
+                    role === "admin" ? undefined : eq(accounts.id, departmentId as string),
+                )
             );
 
             if(!data) {
@@ -105,6 +139,18 @@ const app = new Hono()
 
             if(!auth?.userId){
                 return c.json({error: "unauthorized"}, 401);
+            }
+
+            const { role, departmentId } = await getScopedDepartmentForUser(auth);
+
+            if (role !== "admin") {
+                if (!departmentId) {
+                    return c.json({ error: "forbidden" }, 403);
+                }
+
+                if (values.accountId !== departmentId) {
+                    return c.json({ error: "forbidden" }, 403);
+                }
             }
 
             const [data] = await db.insert(transactions).values({
@@ -127,6 +173,19 @@ const app = new Hono()
             
             if(!auth?.userId){
                 return c.json({error: "unauthorized"}, 401);
+            }
+
+            const { role, departmentId } = await getScopedDepartmentForUser(auth);
+
+            if (role !== "admin") {
+                if (!departmentId) {
+                    return c.json({ error: "forbidden" }, 403);
+                }
+
+                const hasForeignDepartment = values.some((value) => value.accountId !== departmentId);
+                if (hasForeignDepartment) {
+                    return c.json({ error: "forbidden" }, 403);
+                }
             }
 
             const data = await db.insert(transactions).values(
@@ -156,10 +215,22 @@ const app = new Hono()
                 return c.json({error: "unauthorized"}, 401);
             }
 
+            const { role, departmentId } = await getScopedDepartmentForUser(auth);
+
+            if (role !== "admin" && !departmentId) {
+                return c.json({ error: "forbidden" }, 403);
+            }
+
             const transactionsToDelete = db.$with("transactions-to-delete").as(
                 db.select({id: transactions.id})
                 .from(transactions)
-                .where(inArray(transactions.id, values.ids))
+                .innerJoin(accounts, eq(transactions.accountId, accounts.id))
+                .where(
+                    and(
+                        inArray(transactions.id, values.ids),
+                        role === "admin" ? undefined : eq(accounts.id, departmentId as string),
+                    )
+                )
             );
 
             const data = await db
@@ -191,10 +262,28 @@ const app = new Hono()
                 return c.json({error: "unauthorized"}, 401);
             }
 
+            const { role, departmentId } = await getScopedDepartmentForUser(auth);
+
+            if (role !== "admin") {
+                if (!departmentId) {
+                    return c.json({ error: "forbidden" }, 403);
+                }
+
+                if (values.accountId !== departmentId) {
+                    return c.json({ error: "forbidden" }, 403);
+                }
+            }
+
              const transactionsToUpdate = db.$with("transactions-to-update").as(
                 db.select({id: transactions.id})
                 .from(transactions)
-                .where(eq(transactions.id, id))
+                .innerJoin(accounts, eq(transactions.accountId, accounts.id))
+                .where(
+                    and(
+                        eq(transactions.id, id),
+                        role === "admin" ? undefined : eq(accounts.id, departmentId as string),
+                    )
+                )
             );
 
             const [data] = await db
@@ -227,11 +316,23 @@ const app = new Hono()
             if(!auth?.userId) {
                 return c.json({error: "unauthorized"}, 401);
             }
+
+            const { role, departmentId } = await getScopedDepartmentForUser(auth);
+
+            if (role !== "admin" && !departmentId) {
+                return c.json({ error: "forbidden" }, 403);
+            }
             
             const transactionsToDelete = db.$with("transactions-to-delete").as(
                 db.select({id: transactions.id})
                 .from(transactions)
-                .where(eq(transactions.id, id))
+                .innerJoin(accounts, eq(transactions.accountId, accounts.id))
+                .where(
+                    and(
+                        eq(transactions.id, id),
+                        role === "admin" ? undefined : eq(accounts.id, departmentId as string),
+                    )
+                )
             );
 
             const [data] = await db

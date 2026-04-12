@@ -6,9 +6,13 @@ import { WelcomeMsg } from "./WelcomeMsg";
 import { Filters } from "./filters";
 import { getCurrentUserRole } from "@/lib/server-role";
 import { DEFAULT_APP_ROLE } from "@/lib/roles";
+import { getCurrentUserDepartment } from "@/lib/get-user-department";
 
 export async function Header() {
-  const role = (await getCurrentUserRole()) ?? DEFAULT_APP_ROLE;
+  const [role, userDepartment] = await Promise.all([
+    (async () => (await getCurrentUserRole()) ?? DEFAULT_APP_ROLE)(),
+    getCurrentUserDepartment(),
+  ]);
 
   return (
     <header className="bg-gradient-to-b from-blue-700 to-blue-500 px-4 py-8 lg:px-14 pb-36">
@@ -26,7 +30,7 @@ export async function Header() {
                     </ClerkLoading>
             </div>
             <WelcomeMsg />
-            <Filters />
+            <Filters role={role} userDepartment={userDepartment} />
         </div>
     </header>
   )
