@@ -42,7 +42,7 @@ export const AreaVariant = ({ data }: Props) => {
                 <Tooltip content={<CustomTooltip />}/>
                 <Area 
                     type="monotone"
-                    dataKey="income"
+                    dataKey="Budget"
                     stackId="income"
                     strokeWidth={2} 
                     stroke="#3d82f6"
